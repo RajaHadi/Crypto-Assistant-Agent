@@ -1,6 +1,5 @@
 import os
 import asyncio
-import datetime
 import requests
 import streamlit as st
 from dotenv import load_dotenv
@@ -32,17 +31,28 @@ config = RunConfig(
     tracing_disabled=True
 )
 
-# Define tool
+# Define the tool with logging and headers
 @function_tool
 def get_info_coin(symbol: str) -> str:
+    print(f"🔧 Fetching price for: {symbol}")
     url = f"https://api.binance.com/api/v3/ticker/price?symbol={symbol.upper()}"
-    response = requests.get(url)
+    headers = {
+        "User-Agent": "Mozilla/5.0"
+    }
 
-    if response.status_code == 200:
-        data = response.json()
-        return f"The current price of {symbol.upper()} is {data['price']} USDT"
-    else:
-        return "Failed to fetch price. Please check the symbol."
+    try:
+        response = requests.get(url, headers=headers, timeout=5)
+        print(f"📦 Status Code: {response.status_code}")
+        print(f"📦 Response Text: {response.text}")
+
+        if response.status_code == 200:
+            data = response.json()
+            return f"The current price of {symbol.upper()} is {data['price']} USDT"
+        else:
+            return "❌ Failed to fetch price. Please check the symbol or try again later."
+    except Exception as e:
+        print(f"❌ Error during request: {e}")
+        return "❌ An error occurred while fetching the price. Please try again later."
 
 # Define agent
 agent = Agent(
@@ -55,25 +65,23 @@ You are a helpful Crypto Price Agent.
 - If no symbol is given, respond helpfully or explain how to use the tool.
 
 Only use the tool when a valid symbol is mentioned.
-"""
-    ,
+""",
     model=model,
     tools=[get_info_coin],
 )
 
 # Streamlit UI
 st.title("🪙 Crypto Price Assistant")
-st.markdown(
-    """
-    Ask any question about crypto prices or market.
+st.markdown("""
+Ask any question about crypto prices or market.
 
-    **💡 Note:** Please use coin symbols like `BTCUSDT`, `ETHUSDT`, or `SOLUSDT` instead of coin names like 'bitcoin', 'ethereum', or 'solana'.
-    """
-)
+**💡 Note:** Please use coin symbols like `BTCUSDT`, `ETHUSDT`, or `SOLUSDT` instead of names like 'bitcoin' or 'ethereum'.
+""")
 
 user_input = st.text_input("Enter your crypto-related query:", "")
+
 if st.button("Get Answer") and user_input.strip():
-    # Step 1: Detect common symbols
+    # Step 1: Detect symbol
     symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "DOGEUSDT"]
     query = user_input.strip().upper()
     detected_symbol = next((s for s in symbols if s in query), None)
@@ -88,6 +96,10 @@ if st.button("Get Answer") and user_input.strip():
         result = await Runner.run(agent, user_input, run_config=config)
         return result.final_output
 
-    result = asyncio.run(run_agent())
-    st.success("✅ Answer:")
-    st.write(result)
+    try:
+        result = asyncio.run(run_agent())
+        st.success("✅ Answer:")
+        st.write(result)
+    except Exception as e:
+        st.error(f"❌ Error: {e}")
+
