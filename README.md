@@ -42,25 +42,12 @@ A real-time AI-powered assistant that answers cryptocurrency price questions usi
 git clone https://github.com/your-username/crypto-price-agent.git
 cd crypto-price-agent
 2. Install dependencies (using uv)
-bash
-Copy
-Edit
 uv pip install streamlit python-dotenv openai-agents requests
 Or use traditional pip:
-
-bash
-Copy
-Edit
 pip install -r requirements.txt
 3. Add your .env file
-ini
-Copy
-Edit
 GEMINI_API_KEY=your_gemini_api_key_here
 Get your Gemini key from Google AI Studio
 
 4. Run the app
-bash
-Copy
-Edit
 streamlit run app.py
