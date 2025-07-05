@@ -32,27 +32,37 @@ config = RunConfig(
 )
 
 # Define the tool with logging and headers
+
 @function_tool
 def get_info_coin(symbol: str) -> str:
-    print(f"🔧 Fetching price for: {symbol}")
-    url = f"https://api.binance.com/api/v3/ticker/price?symbol={symbol.upper()}"
-    headers = {
-        "User-Agent": "Mozilla/5.0"
+    print(f"🔧 Getting price for: {symbol}")
+    
+    # Convert symbol like BTCUSDT -> btc
+    coin_map = {
+        "BTCUSDT": "bitcoin",
+        "ETHUSDT": "ethereum",
+        "SOLUSDT": "solana",
+        "BNBUSDT": "binancecoin",
+        "DOGEUSDT": "dogecoin"
     }
 
+    coin_id = coin_map.get(symbol.upper())
+    if not coin_id:
+        return "Symbol not supported in CoinGecko."
+
     try:
-        response = requests.get(url, headers=headers, timeout=5)
-        print(f"📦 Status Code: {response.status_code}")
-        print(f"📦 Response Text: {response.text}")
+        url = f"https://api.coingecko.com/api/v3/simple/price?ids={coin_id}&vs_currencies=usd"
+        response = requests.get(url, timeout=5)
+        print(f"📦 {response.status_code} - {response.text}")
 
         if response.status_code == 200:
-            data = response.json()
-            return f"The current price of {symbol.upper()} is {data['price']} USDT"
+            price = response.json()[coin_id]["usd"]
+            return f"The current price of {symbol.upper()} is {price} USD"
         else:
-            return "❌ Failed to fetch price. Please check the symbol or try again later."
+            return "Failed to fetch price. Try again later."
     except Exception as e:
-        print(f"❌ Error during request: {e}")
-        return "❌ An error occurred while fetching the price. Please try again later."
+        print(f"❌ Exception: {e}")
+        return "An error occurred while fetching price."
 
 # Define agent
 agent = Agent(
