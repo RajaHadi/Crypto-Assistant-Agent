@@ -96,10 +96,7 @@ if st.button("Get Answer") and user_input.strip():
     query = user_input.strip().upper()
     detected_symbol = next((s for s in symbols if s in query), None)
 
-    if detected_symbol:
-        st.info(f"🔍 Detected symbol: {detected_symbol}")
-    else:
-        st.warning("⚠️ No valid symbol detected. Please use symbols like BTCUSDT, ETHUSDT, etc.")
+
 
     # Step 2: Run the agent
     async def run_agent():
