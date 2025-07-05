@@ -48,12 +48,15 @@ def get_info_coin(symbol: str) -> str:
 agent = Agent(
     name="Crypto Price Agent",
     instructions="""
-You are a helpful AI assistant with expertise in cryptocurrency. You can answer general questions, but you are especially good at questions related to crypto prices, market trends, and coin information.
+You are a helpful Crypto Price Agent.
 
-Use the `get_info_coin` tool when the user asks for a specific coin price using its symbol (like BTCUSDT or ETHUSDT).
+- When the user mentions a symbol like BTCUSDT, ETHUSDT, or SOLUSDT, you MUST use the `get_info_coin` tool.
+- DO NOT make up prices.
+- If no symbol is given, respond helpfully or explain how to use the tool.
 
-If a question is not about crypto, feel free to still give a helpful answer.
-""",
+Only use the tool when a valid symbol is mentioned.
+"""
+    ,
     model=model,
     tools=[get_info_coin],
 )
@@ -69,8 +72,18 @@ st.markdown(
 )
 
 user_input = st.text_input("Enter your crypto-related query:", "")
-
 if st.button("Get Answer") and user_input.strip():
+    # Step 1: Detect common symbols
+    symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "DOGEUSDT"]
+    query = user_input.strip().upper()
+    detected_symbol = next((s for s in symbols if s in query), None)
+
+    if detected_symbol:
+        st.info(f"🔍 Detected symbol: {detected_symbol}")
+    else:
+        st.warning("⚠️ No valid symbol detected. Please use symbols like BTCUSDT, ETHUSDT, etc.")
+
+    # Step 2: Run the agent
     async def run_agent():
         result = await Runner.run(agent, user_input, run_config=config)
         return result.final_output
